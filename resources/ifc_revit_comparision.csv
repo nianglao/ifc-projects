@@ -1,0 +1,25 @@
+﻿Revit清单,,IFC清单,
+一级,次级,一级,次级
+结构,梁,,IfcBeam
+,板,, IfcSlab
+,柱,, IfcColumn
+,墙,, IfcWall
+,桁架,,
+建筑,墙,, IfcWall
+,柱,,IfcColumn
+,门,,IfcDoor
+,窗,,IfcWindow
+,楼板,, IfcSlab
+,天花,,
+,楼梯,,IfcStair
+,栏杆,, IfcRailing
+,幕墙,,IfcCurtainWall
+,屋面,,IfcRoof
+系统,机械,,
+,电气,,IfcElectricApplianceType
+,卫浴,,IfcPipe
+,风管,,
+,管道,, IfcDuctSegmentType
+,桥架,, IfcCableCarrierFittingType
+,设备,, IfcEquipmentElement
+场地,,IfcSite,
