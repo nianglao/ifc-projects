@@ -14,5 +14,5 @@
 Run
 
 ```
-python2.7 parser.py xxx.ifc > xxx.csv
+python2.7 main.py xxx.ifc > xxx.csv
 ```
