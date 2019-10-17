@@ -11,6 +11,8 @@
 
 http://timgolden.me.uk/pywin32-docs/html/com/win32com/HTML/QuickStartClientCom.html
 
+Generated Python Com Objects in resources/Microsoft-Projects-Com-pywin32/
+
 ### Example Codes
 
 Run in python2.7
