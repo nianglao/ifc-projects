@@ -2,9 +2,11 @@
 # python2.7
 
 import ifcopenshell
+import copy
+
 
 class TreeNode(object):
-    def __init__(self, id, children = None):
+    def __init__(self, id, children=None):
         self.id = id
         self.type = ''
         self.all_ids = []
@@ -12,7 +14,7 @@ class TreeNode(object):
             self.children = []
         else:
             self.children = children
-    
+
     def count(self):
         return len(self.all_ids)
 
@@ -21,11 +23,12 @@ class TreeNode(object):
 
     def add_child(self, child):
         self.children.append(child)
-    
+
     def add_children(self, children):
         for c in children:
             self.children.append(c)
-    
+
+
 class ProjectTree(object):
     def __init__(self, logger, ifc_file_name):
         self.logger = logger
@@ -34,40 +37,43 @@ class ProjectTree(object):
         self.entities = dict()
         for id in self.file_obj.wrapped_data.entity_names():
             self.entities[id] = self.file_obj.by_id(id)
-    
-        projects=self.file_obj.by_type('IfcProject')
+
+        projects = self.file_obj.by_type('IfcProject')
         if len(projects) != 1:
-            raise Exception('Project nodes (%s) != 1'%len(projects))
-        self.root=TreeNode(projects[0].id())
+            raise Exception('Project nodes (%s) != 1' % len(projects))
+        self.root = TreeNode(projects[0].id())
         self.build_project_tree(self.root)
 
     def get_decomposed_entity_ids(self, entity_id):
-        self.logger.info('In get_decomposed_entity_ids, entity_id=%s', entity_id)
+        self.logger.info(
+            'In get_decomposed_entity_ids, entity_id=%s', entity_id)
         children = []
-        entity=self.entities[entity_id]
+        entity = self.entities[entity_id]
         if not hasattr(entity, 'IsDecomposedBy'):
             return
         for aggr in entity.IsDecomposedBy:
             for c in aggr.RelatedObjects:
                 children.append(c.id())
-        self.logger.info('children %s'%children)
+        self.logger.info('children %s' % children)
         return children
-    
+
     def get_contained_entity_ids(self, entity_id):
-        self.logger.info('In get_contained_entity_ids, entity_id=%s', entity_id)
+        self.logger.info(
+            'In get_contained_entity_ids, entity_id=%s', entity_id)
         children = []
-        entity=self.entities[entity_id]
+        entity = self.entities[entity_id]
         if not hasattr(entity, 'ContainsElements'):
             return children
         for ce in entity.ContainsElements:
             for e in ce.RelatedElements:
                 children.append(e.id())
-        self.logger.info('children %s'%children)
+        self.logger.info('children %s' % children)
         return children
 
     def build_project_tree(self, root):
-        child_ids=[]
-        if self.entities[root.id].is_a() in ['IfcProject', 'IfcSite', 'IfcBuilding']: # 'IfcBuildingStorey', 'IfcSpace'
+        child_ids = []
+        # 'IfcBuildingStorey', 'IfcSpace'
+        if self.entities[root.id].is_a() in ['IfcProject', 'IfcSite', 'IfcBuilding']:
             child_ids = self.get_decomposed_entity_ids(root.id)
             for id in child_ids:
                 root.add_child(TreeNode(id))
@@ -75,14 +81,14 @@ class ProjectTree(object):
                 self.build_project_tree(c)
         else:
             child_ids = self.get_contained_entity_ids(root.id)
-            entity_dict=dict()
+            entity_dict = dict()
             # classify by entity_type
             for id in child_ids:
                 entity_type = self.entities[id].is_a()
                 if entity_type not in entity_dict:
                     entity_dict[entity_type] = set()
                 entity_dict[entity_type].add(id)
-            # build child node 
+            # build child node
             for entity_type in entity_dict.keys():
                 id_list = list(entity_dict[entity_type])
                 node = TreeNode(id_list[0])
@@ -104,20 +110,33 @@ class ProjectTree(object):
     def print_tree(self, print_id=False, print_type=False, translation_dict=dict()):
         self._print_tree(self.root, 0, print_id, print_type, translation_dict)
 
-    def _print_tree(self, node, level=0, print_id=False, print_type=False, translation_dict=dict()):
-        attrbutes=[]
+    def _print_tree(self, node, level=0, print_id=False, print_type=False, translation_dict=dict(), writer=None):
+        attributes = [str(level)]
         if node.has_child():
-            attrbutes.append(self.get_entity_name(node.id))
+            attributes.append(self.get_entity_name(node.id))
+            attributes.append(str(0))  # duration
         else:
             if node.type in translation_dict:
-                attrbutes.append(translation_dict[node.type])
+                attributes.append(translation_dict[node.type])
             else:
-                attrbutes.append(node.type)
-            attrbutes.append(str(len(node.all_ids)))
+                attributes.append(node.type)
+            attributes.append(str(len(node.all_ids)))
         if print_id:
-            attrbutes.append(str(node.id))
+            attributes.append(str(node.id))
         if print_type:
-            attrbutes.append(self.entities[node.id].is_a())
-        print ' '*level, ','.join(attrbutes)
+            attributes.append(self.entities[node.id].is_a())
+        print ','.join(attributes)
+        if writer is not None:
+            writer.write(','.join(attributes)+'\n')
         for c in node.children:
-            self._print_tree(c, level+1, print_id=print_id, print_type=print_type, translation_dict=translation_dict)
+            self._print_tree(c, level+1, print_id=print_id,
+                             print_type=print_type, translation_dict=translation_dict, writer=writer)
+
+    def print_microsoft_project_csv(self, translation_dict, out_file):
+        root = copy.deepcopy(self.root)
+        ifc_site = root.children[0]
+        ifc_building = ifc_site.children[0]
+        root.children = ifc_building.children
+        with open(out_file, 'w') as f:
+            f.write('level, name, duration\n')
+            self._print_tree(root, 0, False, False, translation_dict, writer=f)
