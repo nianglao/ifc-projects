@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python2.7
+- Python3.5
 - [ifcopenshell-python](http://ifcopenshell.org/python.html)
 
 ## Supported IFC Version

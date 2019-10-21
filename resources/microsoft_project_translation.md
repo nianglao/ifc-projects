@@ -39,3 +39,4 @@ print task.Name
 - 工期: Duration, 一天的工作时间是 480 秒(8 小时)
 - 开始时间：Start, PyTime
 - 结束时间：Finish, PyTime
+- 估计: Estimated, bool

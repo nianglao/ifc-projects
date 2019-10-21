@@ -125,7 +125,7 @@ class ProjectTree(object):
             attributes.append(str(node.id))
         if print_type:
             attributes.append(self.entities[node.id].is_a())
-        print ','.join(attributes)
+        print(','.join(attributes))
         if writer is not None:
             writer.write(','.join(attributes)+'\n')
         for c in node.children:
@@ -137,6 +137,6 @@ class ProjectTree(object):
         ifc_site = root.children[0]
         ifc_building = ifc_site.children[0]
         root.children = ifc_building.children
-        with open(out_file, 'w') as f:
+        with open(out_file, 'w', encoding='utf-8') as f:
             f.write('level, name, duration\n')
-            self._print_tree(root, 0, False, False, translation_dict, writer=f)
+            self._print_tree(root, 1, False, False, translation_dict, writer=f)
